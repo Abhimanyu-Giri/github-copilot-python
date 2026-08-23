@@ -312,34 +312,47 @@ async function checkPuzzle() {
     timer.stop();
     submitScore();
   } else if (data.completed) {
+  function findConflictIndexes(board, editableCells) {
+    const conflicts = new Set();
+    for (let first = 0; first < SIZE * SIZE; first++) {
+      if (!board[Math.floor(first / SIZE)][first % SIZE]) continue;
+      const firstRow = Math.floor(first / SIZE);
+      const firstCol = first % SIZE;
+      for (let second = first + 1; second < SIZE * SIZE; second++) {
+        const secondRow = Math.floor(second / SIZE);
+        const secondCol = second % SIZE;
+        const sameBox = Math.floor(firstRow / 3) === Math.floor(secondRow / 3) &&
+          Math.floor(firstCol / 3) === Math.floor(secondCol / 3);
+        if (board[secondRow][secondCol] === board[firstRow][firstCol] &&
+          (firstRow === secondRow || firstCol === secondCol || sameBox)) {
+          if (editableCells[first]) conflicts.add(first);
+          if (editableCells[second]) conflicts.add(second);
+        }
+      }
+    }
+    return conflicts;
+  }
+
     submitScore();
   } else if (incorrect.size === 0) {
     msg.style.color = '#388e3c';
+    const board = readBoard(inputs);
+    const editableCells = Array.from(inputs).map((input) => !input.disabled);
+    const conflicts = findConflictIndexes(board, editableCells);
     msg.innerText = 'No incorrect entries found. Complete the remaining cells.';
   } else {
     msg.style.color = '#d32f2f';
-    msg.innerText = 'Some non-empty cells are incorrect.';
-  }
-}
-
-async function requestHint() {
-  const inputs = document.getElementById('sudoku-board').getElementsByTagName('input');
-  const res = await fetch('/hint', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({board: readBoard(inputs)})
-  });
-  const data = await res.json();
-  const msg = document.getElementById('message');
-  if (!res.ok || data.error) {
-    msg.innerText = data.error || 'Unable to provide a hint.';
-    return;
-  }
-  document.getElementById('hints-used').innerText = `Hints used: ${data.hints_used}`;
-  hintsUsed = data.hints_used;
-  if (data.row === undefined) {
+        input.classList.toggle('conflict', conflicts.has(index));
+        input.setAttribute('aria-invalid', conflicts.has(index) ? 'true' : 'false');
     msg.innerText = data.message;
     return;
+    const message = document.getElementById('message');
+    if (conflicts.size > 0) {
+      message.style.color = '#d32f2f';
+      message.innerText = 'Conflict detected in the row, column, or box.';
+    } else if (message.innerText.startsWith('Conflict detected')) {
+      message.innerText = '';
+    }
   }
   const input = inputs[data.row * SIZE + data.col];
   input.value = data.value;

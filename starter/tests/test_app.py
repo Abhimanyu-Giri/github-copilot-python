@@ -50,6 +50,14 @@ def test_stylesheet_contains_accessible_theme_and_responsive_board_hooks(client)
     assert 'aspect-ratio: 1' in stylesheet
 
 
+def test_client_conflict_helper_checks_locked_and_prefilled_cells():
+    script = Path(__file__).parents[1].joinpath('static', 'main.js').read_text()
+
+    assert 'function findConflictIndexes(board, editableCells)' in script
+    assert 'findConflictIndexes(board, editableCells)' in script
+    assert 'conflict detected' in script.lower()
+
+
 def test_new_route_returns_generated_puzzle_and_stores_game(client, monkeypatch):
     puzzle = sudoku_logic.create_empty_board()
     solution = copy.deepcopy(puzzle)
