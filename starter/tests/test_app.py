@@ -27,6 +27,8 @@ def test_index_route_renders_page(client):
     assert response.content_type.startswith('text/html')
     assert b'id="difficulty"' in response.data
     assert b'<option value="medium" selected>' in response.data
+    assert b'id="timer"' in response.data
+    assert b'aria-live="off"' in response.data
 
 
 def test_new_route_returns_generated_puzzle_and_stores_game(client, monkeypatch):

@@ -1,7 +1,42 @@
 // Client-side rendering and interaction for the Flask-backed Sudoku
+(() => {
 const SIZE = 9;
 let puzzle = [];
 let gameCompleted = false;
+
+const timer = (() => {
+  let intervalId = null;
+  let startedAt = null;
+  let elapsedSeconds = 0;
+
+  function render() {
+    const timerElement = document.getElementById('timer');
+    const minutes = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+    const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
+    timerElement.innerText = `${minutes}:${seconds}`;
+  }
+
+  function update() {
+    elapsedSeconds = Math.floor((performance.now() - startedAt) / 1000);
+    render();
+  }
+
+  return {
+    reset() {
+      if (intervalId !== null) clearInterval(intervalId);
+      elapsedSeconds = 0;
+      startedAt = performance.now();
+      render();
+      intervalId = setInterval(update, 1000);
+    },
+    stop() {
+      if (intervalId === null) return;
+      update();
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
+})();
 
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
@@ -50,7 +85,6 @@ function renderPuzzle(puz) {
 }
 
 async function newGame() {
-  gameCompleted = false;
   const difficulty = document.getElementById('difficulty').value;
   const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`);
   const data = await res.json();
@@ -58,6 +92,7 @@ async function newGame() {
     document.getElementById('message').innerText = data.error || 'Unable to start a new game.';
     return;
   }
+  gameCompleted = false;
   renderPuzzle(data.puzzle);
   document.getElementById('difficulty').value = data.difficulty;
   document.getElementById('difficulty-display').innerText =
@@ -65,6 +100,7 @@ async function newGame() {
   document.getElementById('hints-used').innerText = 'Hints used: 0';
   document.getElementById('message').innerText = '';
   updateConflicts();
+  timer.reset();
 }
 
 function readBoard(inputs) {
@@ -135,6 +171,7 @@ async function checkPuzzle() {
   }
   if (data.completed && !gameCompleted) {
     gameCompleted = true;
+    timer.stop();
     msg.style.color = '#388e3c';
     msg.innerText = 'Congratulations! You solved it!';
   } else if (incorrect.size === 0) {
@@ -184,3 +221,4 @@ window.addEventListener('load', () => {
   // initialize
   newGame();
 });
+})();

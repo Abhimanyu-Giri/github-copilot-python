@@ -19,6 +19,20 @@ h1 {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.timer-panel {
+    margin: 18px auto 0;
+    font-size: 18px;
+}
+
+#timer {
+    display: inline-block;
+    min-width: 5ch;
+    margin-left: 8px;
+    font-size: 28px;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+
 .sudoku-row {
     display: flex;
 }
