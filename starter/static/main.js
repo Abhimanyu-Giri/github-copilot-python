@@ -1,6 +1,7 @@
 // Client-side rendering and interaction for the Flask-backed Sudoku
 const SIZE = 9;
 let puzzle = [];
+let gameCompleted = false;
 
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
@@ -18,6 +19,7 @@ function createBoardElement() {
       input.addEventListener('input', (e) => {
         const val = e.target.value.replace(/[^1-9]/g, '');
         e.target.value = val;
+        updateConflicts();
       });
       rowDiv.appendChild(input);
     }
@@ -48,24 +50,68 @@ function renderPuzzle(puz) {
 }
 
 async function newGame() {
-  const res = await fetch('/new');
+  gameCompleted = false;
+  const difficulty = document.getElementById('difficulty').value;
+  const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`);
   const data = await res.json();
+  if (!res.ok) {
+    document.getElementById('message').innerText = data.error || 'Unable to start a new game.';
+    return;
+  }
   renderPuzzle(data.puzzle);
+  document.getElementById('difficulty').value = data.difficulty;
+  document.getElementById('difficulty-display').innerText =
+    data.difficulty.charAt(0).toUpperCase() + data.difficulty.slice(1);
+  document.getElementById('hints-used').innerText = 'Hints used: 0';
   document.getElementById('message').innerText = '';
+  updateConflicts();
 }
 
-async function checkSolution() {
-  const boardDiv = document.getElementById('sudoku-board');
-  const inputs = boardDiv.getElementsByTagName('input');
+function readBoard(inputs) {
   const board = [];
   for (let i = 0; i < SIZE; i++) {
     board[i] = [];
     for (let j = 0; j < SIZE; j++) {
-      const idx = i * SIZE + j;
-      const val = inputs[idx].value;
+      const val = inputs[i * SIZE + j].value;
       board[i][j] = val ? parseInt(val, 10) : 0;
     }
   }
+  return board;
+}
+
+function updateConflicts() {
+  const boardDiv = document.getElementById('sudoku-board');
+  const inputs = boardDiv.getElementsByTagName('input');
+  for (let index = 0; index < inputs.length; index++) {
+    const input = inputs[index];
+    if (!input.disabled) {
+      input.classList.remove('conflict');
+      input.setAttribute('aria-invalid', 'false');
+    }
+  }
+  for (let first = 0; first < inputs.length; first++) {
+    if (inputs[first].disabled || !inputs[first].value) continue;
+    const firstRow = Math.floor(first / SIZE);
+    const firstCol = first % SIZE;
+    for (let second = first + 1; second < inputs.length; second++) {
+      if (inputs[second].disabled || inputs[second].value !== inputs[first].value) continue;
+      const secondRow = Math.floor(second / SIZE);
+      const secondCol = second % SIZE;
+      const sameBox = Math.floor(firstRow / 3) === Math.floor(secondRow / 3) &&
+        Math.floor(firstCol / 3) === Math.floor(secondCol / 3);
+      if (firstRow === secondRow || firstCol === secondCol || sameBox) {
+        inputs[first].classList.add('conflict');
+        inputs[second].classList.add('conflict');
+        inputs[first].setAttribute('aria-invalid', 'true');
+        inputs[second].setAttribute('aria-invalid', 'true');
+      }
+    }
+  }
+}
+
+async function checkPuzzle() {
+  const inputs = document.getElementById('sudoku-board').getElementsByTagName('input');
+  const board = readBoard(inputs);
   const res = await fetch('/check', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -73,7 +119,7 @@ async function checkSolution() {
   });
   const data = await res.json();
   const msg = document.getElementById('message');
-  if (data.error) {
+  if (!res.ok || data.error) {
     msg.style.color = '#d32f2f';
     msg.innerText = data.error;
     return;
@@ -87,19 +133,54 @@ async function checkSolution() {
       inp.className = 'sudoku-cell incorrect';
     }
   }
-  if (incorrect.size === 0) {
+  if (data.completed && !gameCompleted) {
+    gameCompleted = true;
     msg.style.color = '#388e3c';
     msg.innerText = 'Congratulations! You solved it!';
+  } else if (incorrect.size === 0) {
+    msg.style.color = '#388e3c';
+    msg.innerText = 'No incorrect entries found. Complete the remaining cells.';
   } else {
     msg.style.color = '#d32f2f';
-    msg.innerText = 'Some cells are incorrect.';
+    msg.innerText = 'Some non-empty cells are incorrect.';
+  }
+}
+
+async function requestHint() {
+  const inputs = document.getElementById('sudoku-board').getElementsByTagName('input');
+  const res = await fetch('/hint', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({board: readBoard(inputs)})
+  });
+  const data = await res.json();
+  const msg = document.getElementById('message');
+  if (!res.ok || data.error) {
+    msg.innerText = data.error || 'Unable to provide a hint.';
+    return;
+  }
+  document.getElementById('hints-used').innerText = `Hints used: ${data.hints_used}`;
+  if (data.row === undefined) {
+    msg.innerText = data.message;
+    return;
+  }
+  const input = inputs[data.row * SIZE + data.col];
+  input.value = data.value;
+  input.disabled = true;
+  input.className = 'sudoku-cell hinted';
+  input.setAttribute('aria-invalid', 'false');
+  if (Array.from(inputs).every((cell) => cell.value)) {
+    await checkPuzzle();
+  } else {
+    msg.innerText = 'One correct cell was filled and locked.';
   }
 }
 
 // Wire buttons
 window.addEventListener('load', () => {
   document.getElementById('new-game').addEventListener('click', newGame);
-  document.getElementById('check-solution').addEventListener('click', checkSolution);
+  document.getElementById('check-puzzle').addEventListener('click', checkPuzzle);
+  document.getElementById('hint').addEventListener('click', requestHint);
   // initialize
   newGame();
 });

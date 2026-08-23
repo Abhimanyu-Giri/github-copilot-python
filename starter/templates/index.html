@@ -7,11 +7,20 @@
 </head>
 <body>
   <h1>Sudoku Game</h1>
+  <label for="difficulty">Difficulty</label>
+  <select id="difficulty" name="difficulty">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
+  <span id="difficulty-display" aria-live="polite">Medium</span>
   <div id="sudoku-board"></div>
   <div class="controls">
     <button id="new-game">New Game</button>
-    <button id="check-solution">Check Solution</button>
-    <span id="message"></span>
+    <button id="check-puzzle">Check Puzzle</button>
+    <button id="hint">Hint</button>
+    <span id="hints-used" aria-live="polite">Hints used: 0</span>
+    <p id="message" role="status" aria-live="polite"></p>
   </div>
   <script src="/static/main.js"></script>
 </body>

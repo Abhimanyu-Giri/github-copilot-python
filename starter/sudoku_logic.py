@@ -4,6 +4,11 @@ import random
 SIZE = 9
 EMPTY = 0
 MIN_CLUES = 17
+DIFFICULTY_CLUES = {
+    'easy': 40,
+    'medium': 32,
+    'hard': 26,
+}
 
 
 def deep_copy(board: list[list[int]]) -> list[list[int]]:

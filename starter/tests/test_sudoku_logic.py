@@ -1,5 +1,7 @@
 import random
 
+import pytest
+
 import sudoku_logic
 
 
@@ -14,6 +16,29 @@ VALID_BOARD = [
     [2, 8, 7, 4, 1, 9, 6, 3, 5],
     [3, 4, 5, 2, 8, 6, 1, 7, 9],
 ]
+
+
+def test_difficulty_settings_define_the_expected_clue_counts():
+    assert sudoku_logic.DIFFICULTY_CLUES == {
+        'easy': 40,
+        'medium': 32,
+        'hard': 26,
+    }
+
+
+@pytest.mark.parametrize('difficulty, clues', sudoku_logic.DIFFICULTY_CLUES.items())
+def test_each_difficulty_generates_a_unique_puzzle(difficulty, clues):
+    random.seed(19)
+
+    puzzle, solution = sudoku_logic.generate_puzzle(clues)
+
+    assert sudoku_logic.count_solutions(puzzle) == 1
+    assert sum(cell != sudoku_logic.EMPTY for row in puzzle for cell in row) == clues
+    assert all(
+        puzzle_cell == sudoku_logic.EMPTY or puzzle_cell == solution_cell
+        for puzzle_row, solution_row in zip(puzzle, solution)
+        for puzzle_cell, solution_cell in zip(puzzle_row, solution_row)
+    )
 
 
 def test_create_empty_board_has_expected_shape_and_values():
