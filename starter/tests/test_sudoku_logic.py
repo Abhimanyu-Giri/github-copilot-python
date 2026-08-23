@@ -43,6 +43,21 @@ def test_is_safe_rejects_row_column_and_box_conflicts():
     assert sudoku_logic.is_safe(board, 1, 1, 6)
 
 
+def test_count_solutions_returns_one_for_a_completed_board():
+    assert sudoku_logic.count_solutions(VALID_BOARD) == 1
+
+
+def test_count_solutions_stops_at_two_for_a_board_with_many_solutions():
+    assert sudoku_logic.count_solutions(sudoku_logic.create_empty_board()) == 2
+
+
+def test_count_solutions_returns_zero_for_an_invalid_board():
+    board = sudoku_logic.deep_copy(VALID_BOARD)
+    board[0][1] = board[0][0]
+
+    assert sudoku_logic.count_solutions(board) == 0
+
+
 def test_fill_board_creates_a_complete_valid_board():
     random.seed(7)
     board = sudoku_logic.create_empty_board()
@@ -73,6 +88,7 @@ def test_generate_puzzle_is_seeded_and_matches_its_solution():
     assert (first_puzzle, first_solution) == (second_puzzle, second_solution)
     assert all(sorted(row) == list(range(1, 10)) for row in first_solution)
     assert sum(cell != sudoku_logic.EMPTY for row in first_puzzle for cell in row) == 35
+    assert sudoku_logic.count_solutions(first_puzzle) == 1
     assert all(
         puzzle_cell == sudoku_logic.EMPTY or puzzle_cell == solution_cell
         for puzzle_row, solution_row in zip(first_puzzle, first_solution)
