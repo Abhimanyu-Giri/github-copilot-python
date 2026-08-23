@@ -31,7 +31,16 @@ source .venv/bin/activate
 5. Install required Python packages.
 
 ```bash
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
+```
+
+## Testing
+
+From the `starter` directory, install the dependencies and run the complete test suite:
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 -m pytest
 ```
 
 6. Run the Flask app.
