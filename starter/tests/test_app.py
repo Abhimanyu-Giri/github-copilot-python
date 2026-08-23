@@ -1,4 +1,5 @@
 import copy
+from pathlib import Path
 
 import pytest
 
@@ -29,6 +30,24 @@ def test_index_route_renders_page(client):
     assert b'<option value="medium" selected>' in response.data
     assert b'id="timer"' in response.data
     assert b'aria-live="off"' in response.data
+    assert b'for="player-name"' in response.data
+    assert b'id="leaderboard"' in response.data
+    assert b'id="leaderboard-empty"' in response.data
+    assert b'id="theme-toggle"' in response.data
+    assert b'aria-label="Toggle dark mode"' in response.data
+    assert b'<main>' in response.data
+
+
+def test_stylesheet_contains_accessible_theme_and_responsive_board_hooks(client):
+    stylesheet = Path(__file__).parents[1].joinpath('static', 'styles.css').read_text()
+
+    assert '--color-block-even' in stylesheet
+    assert '--color-block-odd' in stylesheet
+    assert '[data-theme="dark"]' in stylesheet
+    assert '.block-even' in stylesheet
+    assert '.block-odd' in stylesheet
+    assert '@media (max-width: 520px)' in stylesheet
+    assert 'aspect-ratio: 1' in stylesheet
 
 
 def test_new_route_returns_generated_puzzle_and_stores_game(client, monkeypatch):

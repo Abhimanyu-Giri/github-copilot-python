@@ -6,26 +6,68 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <h1>Sudoku Game</h1>
-  <label for="difficulty">Difficulty</label>
-  <select id="difficulty" name="difficulty">
-    <option value="easy">Easy</option>
-    <option value="medium" selected>Medium</option>
-    <option value="hard">Hard</option>
-  </select>
-  <span id="difficulty-display" aria-live="polite">Medium</span>
-  <div class="timer-panel">
-    <span id="timer-label">Elapsed time</span>
-    <span id="timer" aria-labelledby="timer-label" aria-live="off">00:00</span>
-  </div>
-  <div id="sudoku-board"></div>
-  <div class="controls">
-    <button id="new-game">New Game</button>
-    <button id="check-puzzle">Check Puzzle</button>
-    <button id="hint">Hint</button>
-    <span id="hints-used" aria-live="polite">Hints used: 0</span>
-    <p id="message" role="status" aria-live="polite"></p>
-  </div>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Logic practice</p>
+      <h1>Sudoku Game</h1>
+    </div>
+    <label class="theme-control" for="theme-toggle">
+      <input id="theme-toggle" type="checkbox" aria-label="Toggle dark mode">
+      <span>Dark mode</span>
+    </label>
+  </header>
+  <main>
+    <section class="game-panel" aria-labelledby="game-title">
+      <h2 id="game-title">Current puzzle</h2>
+      <div class="game-meta">
+        <div class="field-group">
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty" name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <span id="difficulty-display" aria-live="polite">Medium</span>
+        </div>
+        <div class="timer-panel">
+          <span id="timer-label">Elapsed time</span>
+          <span id="timer" aria-labelledby="timer-label" aria-live="off">00:00</span>
+        </div>
+      </div>
+      <div id="sudoku-board" aria-label="Sudoku puzzle board"></div>
+      <div class="controls" aria-label="Puzzle controls">
+        <div class="field-group player-field">
+          <label for="player-name">Player name</label>
+          <input id="player-name" name="player-name" type="text" maxlength="40" autocomplete="name">
+        </div>
+        <div class="button-group">
+          <button id="new-game" type="button">New Game</button>
+          <button id="check-puzzle" type="button">Check Puzzle</button>
+          <button id="hint" type="button">Hint</button>
+        </div>
+        <span id="hints-used" aria-live="polite">Hints used: 0</span>
+        <p id="message" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+    <section id="leaderboard" aria-labelledby="leaderboard-title">
+      <h2 id="leaderboard-title">Top 10 fastest times</h2>
+      <p id="leaderboard-empty">No completed games yet.</p>
+      <div class="table-wrapper">
+        <table id="leaderboard-table" hidden>
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Player</th>
+              <th scope="col">Time</th>
+              <th scope="col">Difficulty</th>
+              <th scope="col">Hints</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
   <script src="/static/main.js"></script>
 </body>
 </html>
